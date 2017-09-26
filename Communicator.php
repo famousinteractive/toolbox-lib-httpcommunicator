@@ -22,6 +22,11 @@ class Communicator
     protected $_files = false;
     protected $_base_uri = 'api';
 
+    /**
+     * Communicator constructor.
+     * @param string $baseUri
+     * @param array $headers
+     */
     public function __construct($baseUri='', array $headers)
     {
         $this->_base_uri = $baseUri;
@@ -29,6 +34,10 @@ class Communicator
         return $this;
     }
 
+    /**
+     * @param array $headers
+     * @return $this
+     */
     protected function buildClient(array $headers = []) {
         $this->_client = new Client([
             'base_uri'  =>  $this->_base_uri,
@@ -37,6 +46,11 @@ class Communicator
         return $this;
     }
 
+    /**
+     * @param $path (relative path only, not host part)
+     * @param array $data
+     * @return null
+     */
     public function get( $path, array $data) {
         $this->_path = $path;
         $this->_data = $data;
@@ -53,11 +67,23 @@ class Communicator
         $this->_data = $data;
         return $this->call('POST');
     }
+
+    /**
+     * @param $path
+     * @param array $data
+     * @return null
+     */
     public function put( $path, array $data) {
         $this->_path = $path;
         $this->_data = $data;
         return $this->call('PUT');
     }
+
+    /**
+     * @param $path
+     * @param array $data
+     * @return null
+     */
     public function delete( $path, array $data) {
         $this->_path = $path;
         $this->_data = $data;
@@ -82,6 +108,10 @@ class Communicator
         return $this;
     }
 
+    /**
+     * @param $method
+     * @return null
+     */
     protected function call( $method) {
 
         $requestData = $this->getRequestData($method);
@@ -118,6 +148,10 @@ class Communicator
         return $response;
     }
 
+    /**
+     * @param $method
+     * @return array
+     */
     protected function getRequestData( $method) {
 
         if($method == 'GET') {
@@ -149,6 +183,9 @@ class Communicator
         ];
     }
 
+    /**
+     * Reset the library to be reused as it
+     */
     protected function reset() {
         $this->_response = null;
         $this->_path = null;
