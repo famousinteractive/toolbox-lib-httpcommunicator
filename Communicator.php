@@ -49,7 +49,7 @@ class Communicator
     /**
      * @param $path (relative path only, not host part)
      * @param array $data
-     * @return null
+     * @return Psr7\Response
      */
     public function get( $path, array $data) {
         $this->_path = $path;
@@ -71,7 +71,7 @@ class Communicator
     /**
      * @param $path
      * @param array $data
-     * @return null
+     * @return Psr7\Response
      */
     public function put( $path, array $data) {
         $this->_path = $path;
@@ -82,7 +82,7 @@ class Communicator
     /**
      * @param $path
      * @param array $data
-     * @return null
+     * @return Psr7\Response
      */
     public function delete( $path, array $data) {
         $this->_path = $path;
@@ -110,7 +110,7 @@ class Communicator
 
     /**
      * @param $method
-     * @return null
+     * @return Psr7\Response
      */
     protected function call( $method) {
 
