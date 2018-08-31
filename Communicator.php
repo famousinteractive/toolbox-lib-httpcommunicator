@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Libraries\Famous\HttpCommunicator;
+namespace App\Libraries\HttpCommunicator;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
@@ -21,13 +21,15 @@ class Communicator
     protected $_json = false;
     protected $_files = false;
     protected $_base_uri = 'api';
+    protected $_hasError = false;
+    protected $_errors;
 
     /**
      * Communicator constructor.
      * @param string $baseUri
      * @param array $headers
      */
-    public function __construct($baseUri='', array $headers)
+    public function __construct($baseUri='', array $headers = [])
     {
         $this->_base_uri = $baseUri;
         $this->buildClient( $headers );
@@ -51,7 +53,7 @@ class Communicator
      * @param array $data
      * @return Psr7\Response
      */
-    public function get( $path, array $data) {
+    public function get( $path, array $data = []) {
         $this->_path = $path;
         $this->_data = $data;
         return $this->call('GET');
@@ -62,7 +64,7 @@ class Communicator
      * @param array $data ['key' => 'value']
      * @return bool|\Psr\Http\Message\ResponseInterface
      */
-    public function post( $path, array $data) {
+    public function post( $path, array $data = []) {
         $this->_path = $path;
         $this->_data = $data;
         return $this->call('POST');
@@ -73,7 +75,7 @@ class Communicator
      * @param array $data
      * @return Psr7\Response
      */
-    public function put( $path, array $data) {
+    public function put( $path, array $data = []) {
         $this->_path = $path;
         $this->_data = $data;
         return $this->call('PUT');
@@ -84,7 +86,7 @@ class Communicator
      * @param array $data
      * @return Psr7\Response
      */
-    public function delete( $path, array $data) {
+    public function delete( $path, array $data = []) {
         $this->_path = $path;
         $this->_data = $data;
         return $this->call('DELETE');
@@ -110,7 +112,7 @@ class Communicator
 
     /**
      * @param $method
-     * @return Psr7\Response
+     * @return bool|Psr7\Response
      */
     protected function call( $method) {
 
@@ -118,36 +120,55 @@ class Communicator
 
         try {
             $this->_response = $this->_client->request($method, $this->_path, $requestData);
-
         } catch (ClientException $e) {
-            if(env('APP_DEBUG')) {
-                echo Psr7\str($e->getRequest());
-                echo Psr7\str($e->getResponse());
-            } else {
-                \Log::error(Psr7\str($e->getRequest()));
-                \Log::error(Psr7\str($e->getResponse()));
-            }
-            die;
+            $this->setError($e);
+            $this->_hasError = true;
         } catch (RequestException $e) {
-            if(env('APP_DEBUG')) {
-                echo Psr7\str($e->getRequest());
-                if ($e->hasResponse()) {
-                    echo Psr7\str($e->getResponse());
-                }
-            } else {
-                \Log::error(Psr7\str($e->getRequest()));
-                if ($e->hasResponse()) {
-                    \Log::error(Psr7\str($e->getResponse()));
-                }
-            }
-            die;
+            $this->setError($e);
+            $this->_hasError = true;
         }
 
-        $response = $this->_response;
-        $this->reset();
-        return $response;
+        if(!$this->_hasError) {
+            $response = $this->_response;
+            $this->reset();
+            return $response;
+        } else {
+            return false;
+        }
     }
 
+    protected function setError($e) {
+        $this->_errors = $e;
+    }
+
+    public function getError($echoError = null) {
+        if(is_null($echoError))
+            $echoError = env('APP_DEBUG');
+
+
+        if($this->_errors instanceof ClientException) {
+            if($echoError) {
+                echo Psr7\str($this->_errors->getRequest());
+                echo Psr7\str($this->_errors->getResponse());
+            }
+
+            \Log::error(Psr7\str($this->_errors->getRequest()));
+            \Log::error(Psr7\str($this->_errors->getResponse()));
+        }
+        if($this->_errors instanceof  RequestException) {
+            if($echoError) {
+                echo Psr7\str($this->_errors->getRequest());
+                if ($this->_errors->hasResponse()) {
+                    echo Psr7\str($this->_errors->getResponse());
+                }
+            }
+
+            \Log::error(Psr7\str($this->_errors->getRequest()));
+            if ($this->_errors->hasResponse()) {
+                \Log::error(Psr7\str($this->_errors->getResponse()));
+            }
+        }
+    }
     /**
      * @param $method
      * @return array
